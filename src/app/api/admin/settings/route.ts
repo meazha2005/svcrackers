@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool, { table } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
+import { sendTelegramNotification } from '@/lib/telegram';
 import crypto from 'crypto';
 
 export async function GET() {
@@ -35,6 +36,29 @@ export async function POST(request: Request) {
           [key, (value as string) || '']
         );
       }
+
+      // Trigger Telegram notification for store settings change
+      setImmediate(() => {
+        const storeName = settings.store_name || 'Sri Vinayaga Crackers';
+        const storeAddress = settings.store_address || '';
+        const storePhone = settings.store_phone || '';
+        const storeEmail = settings.store_email || '';
+
+        const telegramMsg = `
+⚙️ <b>STORE SETTINGS UPDATED!</b>
+
+🏬 <b>Store Name:</b> ${storeName}
+📍 <b>Address:</b> ${storeAddress}
+📞 <b>Phone:</b> ${storePhone}
+✉️ <b>Email:</b> ${storeEmail}
+👤 <b>Updated By:</b> ${session.username}
+
+<i>Sri Vinayaga Crackers Admin Panel</i>
+        `.trim();
+
+        sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram settings alert error:', err));
+      });
+
       return NextResponse.json({ success: true, message: 'Settings updated successfully' });
     }
 
@@ -64,6 +88,20 @@ export async function POST(request: Request) {
         `UPDATE ${table('admin_users')} SET password = ? WHERE id = ?`,
         [newHash, session.id]
       );
+
+      // Trigger Security Telegram Alert for password change
+      setImmediate(() => {
+        const telegramMsg = `
+🔐 <b>SECURITY ALERT: ADMIN PASSWORD CHANGED</b>
+
+👤 <b>Admin Username:</b> ${session.username}
+⏰ <b>Time:</b> ${new Date().toLocaleString('en-IN')}
+
+<i>Sri Vinayaga Crackers Security System</i>
+        `.trim();
+
+        sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram password change alert error:', err));
+      });
 
       return NextResponse.json({ success: true, message: 'Password updated successfully' });
     }

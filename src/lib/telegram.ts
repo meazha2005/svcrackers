@@ -25,9 +25,9 @@ export async function sendTelegramNotification(message: string, customToken?: st
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
-    // Strict 3-second timeout so it never hangs order placement
+    // 5-second AbortSignal timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     const res = await fetch(url, {
       method: 'POST',
@@ -46,7 +46,7 @@ export async function sendTelegramNotification(message: string, customToken?: st
     return data.ok;
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      console.warn('Telegram API notification request timed out after 3 seconds.');
+      console.warn('Telegram API notification request timed out after 5 seconds.');
     } else {
       console.error('Telegram notification error:', error.message || error);
     }

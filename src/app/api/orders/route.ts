@@ -181,18 +181,30 @@ export async function POST(request: Request) {
 
     // Fire Telegram Notification completely out-of-band so response is instant!
     setImmediate(() => {
+      const itemListText = orderItemsToInsert
+        .map((item, idx) => `  ${idx + 1}. ${item.product_name} × ${item.quantity} = ₹${item.total_price.toFixed(2)}`)
+        .join('\n');
+
+      const isPos = customer_address.includes('counter billing');
+      const headerTitle = isPos ? '🧾 <b>NEW ADMIN POS BILL CREATED!</b>' : '🎉 <b>NEW ORDER ESTIMATE PLACED!</b>';
+
       const telegramMessage = `
-🎉 <b>NEW ORDER PLACED!</b>
+${headerTitle}
 
 🆔 <b>Order ID:</b> <code>${order_id}</code>
 👤 <b>Customer:</b> ${customer_name}
 📞 <b>Phone:</b> ${customer_phone}
 📍 <b>Address:</b> ${customer_address}
-💵 <b>Total Amount:</b> ₹${total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-📦 <b>Total Items:</b> ${orderItemsToInsert.length}
+
+🛒 <b>ORDERED ITEMS (${orderItemsToInsert.length}):</b>
+${itemListText}
+
+💵 <b>NET TOTAL AMOUNT:</b> ₹${total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+📌 <b>Status:</b> Bill Order Placed
 
 <i>Sri Vinayaga Crackers Store</i>
-      `;
+      `.trim();
+
       sendTelegramNotification(telegramMessage).catch(err => console.error('Telegram background alert error:', err));
     });
 

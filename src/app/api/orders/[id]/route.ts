@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import pool, { table } from '@/lib/db';
 import { getAdminSession } from '@/lib/auth';
+import { sendTelegramNotification } from '@/lib/telegram';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -53,6 +54,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const body = await request.json();
     const { status, customer_name, customer_phone, customer_address, items } = body;
 
+    // Fetch current order info before update
+    const [existingRows]: any = await pool.query(
+      `SELECT * FROM ${table('orders')} WHERE order_id = ?`,
+      [orderId]
+    );
+    const existingOrder = existingRows[0] || {};
+
     if (status) {
       await pool.query(
         `UPDATE ${table('orders')} SET status = ? WHERE order_id = ?`,
@@ -71,6 +79,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
+    let updatedTotal = existingOrder.total_amount;
+
     // If items are being edited
     if (Array.isArray(items)) {
       await pool.query(`DELETE FROM ${table('order_items')} WHERE order_id = ?`, [orderId]);
@@ -85,7 +95,29 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         );
       }
       await pool.query(`UPDATE ${table('orders')} SET total_amount = ? WHERE order_id = ?`, [newTotal, orderId]);
+      updatedTotal = newTotal;
     }
+
+    // Trigger Telegram Notification for Order Action Update
+    setImmediate(() => {
+      const targetName = customer_name || existingOrder.customer_name || 'Customer';
+      const targetPhone = customer_phone || existingOrder.customer_phone || '';
+      const updatedStatus = status || existingOrder.status || 'Updated';
+
+      const telegramMsg = `
+🔄 <b>ORDER ACTION UPDATED!</b>
+
+🆔 <b>Order ID:</b> <code>${orderId}</code>
+👤 <b>Customer:</b> ${targetName}
+📞 <b>Phone:</b> ${targetPhone}
+📌 <b>New Status:</b> <b>${updatedStatus}</b>
+💵 <b>Total Amount:</b> ₹${Number(updatedTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+
+<i>Sri Vinayaga Crackers Admin Panel</i>
+      `.trim();
+
+      sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram order action alert error:', err));
+    });
 
     return NextResponse.json({ success: true, message: 'Order updated successfully' });
   } catch (error: any) {
@@ -103,6 +135,20 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const { id: orderId } = await params;
     await pool.query(`DELETE FROM ${table('order_items')} WHERE order_id = ?`, [orderId]);
     await pool.query(`DELETE FROM ${table('orders')} WHERE order_id = ?`, [orderId]);
+
+    // Trigger Telegram Notification for Order Deletion
+    setImmediate(() => {
+      const telegramMsg = `
+🗑️ <b>ORDER DELETED</b>
+
+🆔 <b>Order ID:</b> <code>${orderId}</code>
+<i>This order was deleted by Administrator.</i>
+
+<i>Sri Vinayaga Crackers Admin Panel</i>
+      `.trim();
+
+      sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram order deletion alert error:', err));
+    });
 
     return NextResponse.json({ success: true, message: 'Order deleted successfully' });
   } catch (error: any) {
