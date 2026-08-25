@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 
@@ -11,6 +12,12 @@ interface ImageModalProps {
 }
 
 export default function ImageModal({ isOpen, imageUrl, productName, onClose }: ImageModalProps) {
+  const [imgSrc, setImgSrc] = useState(imageUrl || '/logo.png');
+
+  useEffect(() => {
+    setImgSrc(imageUrl || '/logo.png');
+  }, [imageUrl]);
+
   if (!isOpen) return null;
 
   return (
@@ -24,11 +31,13 @@ export default function ImageModal({ isOpen, imageUrl, productName, onClose }: I
         </button>
         <div className="relative w-full h-72 sm:h-96 rounded-xl overflow-hidden bg-slate-100 mb-3 border border-slate-200">
           <Image
-            src={imageUrl || '/logo.png'}
+            src={imgSrc}
             alt={productName}
             fill
             sizes="(max-width: 768px) 100vw, 500px"
             className="object-contain p-2"
+            onError={() => setImgSrc('/logo.png')}
+            unoptimized={imgSrc.startsWith('http')}
           />
         </div>
         <h3 className="text-center font-bold text-slate-800 text-lg">{productName}</h3>

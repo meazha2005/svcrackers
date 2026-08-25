@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Plus, Minus, Eye } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import { Product } from '@/lib/types';
 
 interface MobileProductCardProps {
@@ -17,6 +18,12 @@ export default function MobileProductCard({
   onQuantityChange,
   onImageClick
 }: MobileProductCardProps) {
+  const [imgSrc, setImgSrc] = useState(product.image_url || '/logo.png');
+
+  useEffect(() => {
+    setImgSrc(product.image_url || '/logo.png');
+  }, [product.image_url]);
+
   const mrp = Number(product.mrp_rate);
   const discounted = product.discounted_rate ? Number(product.discounted_rate) : mrp;
   const hasDiscount = discounted < mrp;
@@ -24,69 +31,53 @@ export default function MobileProductCard({
   const lineTotal = quantity * discounted;
 
   return (
-    <div className={`p-3 rounded-xl border-2 transition-all shadow-sm ${
-      quantity > 0 
-        ? 'bg-amber-50/80 border-amber-400' 
-        : 'bg-white border-slate-200 hover:border-slate-300'
-    }`}>
+    <div className={`bg-white border rounded-2xl p-4 shadow-sm transition-all space-y-3 ${quantity > 0 ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20' : 'border-slate-200'}`}>
+      
       <div className="flex items-start gap-3">
-        
         {/* Product Image */}
         <div 
-          onClick={() => onImageClick(product.image_url || '/logo.png', product.name)}
-          className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 bg-white shrink-0 cursor-pointer shadow-sm active:scale-95 transition-transform"
+          onClick={() => onImageClick(imgSrc, product.name)}
+          className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-300 bg-white shrink-0 cursor-pointer p-1"
         >
           <Image
-            src={product.image_url || '/logo.png'}
+            src={imgSrc}
             alt={product.name}
             fill
             sizes="64px"
             className="object-contain p-1"
+            onError={() => setImgSrc('/logo.png')}
+            unoptimized={imgSrc.startsWith('http')}
           />
         </div>
 
-        {/* Product Title & Info */}
+        {/* Product Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <h4 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2">
-              {product.name}
-            </h4>
-            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-600 rounded">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">{product.name}</h3>
+            <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600 shrink-0">
               {product.unit_symbol || product.unit_name || 'BOX'}
             </span>
           </div>
 
-          {/* Pricing Row */}
-          <div className="flex items-baseline gap-2 mt-1">
-            <span className="font-extrabold text-red-600 text-base font-mono">
-              ₹{discounted.toFixed(2)}
-            </span>
+          <div className="mt-1 flex items-baseline gap-2">
+            <span className="text-sm font-extrabold text-red-600 font-mono">₹{discounted.toFixed(2)}</span>
+            <span className="text-xs text-slate-400 line-through font-mono">₹{mrp.toFixed(2)}</span>
             {hasDiscount && (
-              <>
-                <span className="text-xs text-slate-400 line-through font-mono">
-                  ₹{mrp.toFixed(2)}
-                </span>
-                <span className="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded">
-                  {discountPercent}% OFF
-                </span>
-              </>
+              <span className="text-[10px] bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded">
+                -{discountPercent}%
+              </span>
             )}
           </div>
         </div>
-
       </div>
 
-      {/* Bottom Controls & Line Total */}
-      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
-        <div className="text-xs text-slate-500 font-medium">
-          Total: <span className="font-extrabold text-amber-600 text-sm font-mono">₹{lineTotal.toFixed(2)}</span>
-        </div>
-
-        <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded-lg p-1 shadow-sm">
+      {/* Controls & Line Total */}
+      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1">
           <button
             type="button"
             onClick={() => onQuantityChange(product.id, Math.max(0, quantity - 1))}
-            className="w-8 h-8 flex items-center justify-center rounded-md bg-slate-100 text-slate-800 active:bg-red-500 active:text-white font-bold transition-colors disabled:opacity-30"
+            className="w-8 h-8 flex items-center justify-center rounded bg-white text-slate-700 shadow-sm hover:bg-red-500 hover:text-white font-bold transition-colors disabled:opacity-30"
             disabled={quantity <= 0}
           >
             <Minus className="w-4 h-4" />
@@ -100,17 +91,25 @@ export default function MobileProductCard({
               const val = parseInt(e.target.value) || 0;
               onQuantityChange(product.id, Math.max(0, val));
             }}
-            className="w-10 text-center font-bold text-slate-900 text-base focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className="w-12 text-center font-bold text-slate-900 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <button
             type="button"
             onClick={() => onQuantityChange(product.id, quantity + 1)}
-            className="w-8 h-8 flex items-center justify-center rounded-md bg-[#0b255a] text-white active:bg-amber-500 active:text-slate-900 font-bold transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded bg-[#0b255a] text-white shadow-sm hover:bg-amber-500 hover:text-slate-900 font-bold transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
+
+        <div className="text-right">
+          <div className="text-[10px] text-slate-400 uppercase font-bold">Total</div>
+          <div className="text-base font-extrabold text-amber-600 font-mono">
+            ₹{lineTotal.toFixed(2)}
+          </div>
+        </div>
       </div>
+
     </div>
   );
 }

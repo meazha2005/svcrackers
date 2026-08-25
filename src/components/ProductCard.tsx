@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Plus, Minus, Eye } from 'lucide-react';
 import { Product } from '@/lib/types';
@@ -17,6 +18,12 @@ export default function ProductCard({
   onQuantityChange,
   onImageClick
 }: ProductCardProps) {
+  const [imgSrc, setImgSrc] = useState(product.image_url || '/logo.png');
+
+  useEffect(() => {
+    setImgSrc(product.image_url || '/logo.png');
+  }, [product.image_url]);
+
   const mrp = Number(product.mrp_rate);
   const discounted = product.discounted_rate ? Number(product.discounted_rate) : mrp;
   const hasDiscount = discounted < mrp;
@@ -29,15 +36,17 @@ export default function ProductCard({
       {/* Image */}
       <td className="p-3 text-center w-20">
         <div 
-          onClick={() => onImageClick(product.image_url || '/logo.png', product.name)}
+          onClick={() => onImageClick(imgSrc, product.name)}
           className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-300 bg-white cursor-pointer hover:border-amber-500 hover:scale-105 transition-all shadow-sm group mx-auto"
         >
           <Image
-            src={product.image_url || '/logo.png'}
+            src={imgSrc}
             alt={product.name}
             fill
             sizes="56px"
             className="object-contain p-1"
+            onError={() => setImgSrc('/logo.png')}
+            unoptimized={imgSrc.startsWith('http')}
           />
           <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
             <Eye className="w-4 h-4 text-white" />
