@@ -35,22 +35,27 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, description, category_id, unit_id, mrp_rate, discounted_rate, image_url } = body;
+    const { name, description, category_id, unit_id, mrp_rate, discounted_rate, stock_quantity, image_url } = body;
 
     if (!name || mrp_rate === undefined) {
       return NextResponse.json({ success: false, message: 'Name and MRP are required' }, { status: 400 });
     }
 
+    const stockQty = stock_quantity !== undefined && stock_quantity !== null && stock_quantity !== ''
+      ? Math.max(0, parseInt(stock_quantity))
+      : 100;
+
     const [result]: any = await pool.query(
-      `INSERT INTO ${table('products')} (name, description, category_id, unit_id, mrp_rate, discounted_rate, image_url, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+      `INSERT INTO ${table('products')} (name, description, category_id, unit_id, mrp_rate, discounted_rate, stock_quantity, image_url, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [
-        name,
+        name.trim(),
         description || null,
         category_id ? parseInt(category_id) : null,
         unit_id ? parseInt(unit_id) : null,
         parseFloat(mrp_rate),
         discounted_rate ? parseFloat(discounted_rate) : null,
+        stockQty,
         image_url || null
       ]
     );
@@ -69,23 +74,28 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, description, category_id, unit_id, mrp_rate, discounted_rate, image_url, is_active } = body;
+    const { id, name, description, category_id, unit_id, mrp_rate, discounted_rate, stock_quantity, image_url, is_active } = body;
 
     if (!id || !name) {
       return NextResponse.json({ success: false, message: 'ID and Name are required' }, { status: 400 });
     }
 
+    const stockQty = stock_quantity !== undefined && stock_quantity !== null && stock_quantity !== ''
+      ? Math.max(0, parseInt(stock_quantity))
+      : 100;
+
     await pool.query(
       `UPDATE ${table('products')} 
-       SET name = ?, description = ?, category_id = ?, unit_id = ?, mrp_rate = ?, discounted_rate = ?, image_url = ?, is_active = ?
+       SET name = ?, description = ?, category_id = ?, unit_id = ?, mrp_rate = ?, discounted_rate = ?, stock_quantity = ?, image_url = ?, is_active = ?
        WHERE id = ?`,
       [
-        name,
+        name.trim(),
         description || null,
         category_id ? parseInt(category_id) : null,
         unit_id ? parseInt(unit_id) : null,
         parseFloat(mrp_rate),
         discounted_rate ? parseFloat(discounted_rate) : null,
+        stockQty,
         image_url || null,
         is_active !== undefined ? (is_active ? 1 : 0) : 1,
         parseInt(id)

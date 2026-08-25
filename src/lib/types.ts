@@ -25,6 +25,7 @@ export interface Product {
   unit_symbol?: string;
   mrp_rate: number;
   discounted_rate?: number | null;
+  stock_quantity: number;
   image_url?: string | null;
   is_active: number;
   created_at?: string;
@@ -49,6 +50,7 @@ export interface Order {
   customer_address: string;
   total_amount: number;
   status: string;
+  is_stock_deducted?: number;
   created_at: string;
   item_count?: number;
   items?: OrderItem[];

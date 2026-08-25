@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Package, Plus, Edit, Trash2, Upload, Search, CheckCircle2, XCircle, Loader2, X } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Upload, Search, CheckCircle2, XCircle, Loader2, X, AlertTriangle } from 'lucide-react';
 import { Product, Category, Unit } from '@/lib/types';
 
 export default function AdminProductsPage() {
@@ -23,6 +23,7 @@ export default function AdminProductsPage() {
   const [unitId, setUnitId] = useState<string>('');
   const [mrpRate, setMrpRate] = useState<string>('');
   const [discountedRate, setDiscountedRate] = useState<string>('');
+  const [stockQuantity, setStockQuantity] = useState<string>('100');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
 
@@ -65,6 +66,7 @@ export default function AdminProductsPage() {
     setUnitId(units.length > 0 ? units[0].id.toString() : '');
     setMrpRate('');
     setDiscountedRate('');
+    setStockQuantity('100');
     setImageUrl('');
     setIsActive(true);
     setErrorMsg('');
@@ -79,6 +81,7 @@ export default function AdminProductsPage() {
     setUnitId(prod.unit_id ? prod.unit_id.toString() : '');
     setMrpRate(prod.mrp_rate.toString());
     setDiscountedRate(prod.discounted_rate ? prod.discounted_rate.toString() : '');
+    setStockQuantity(prod.stock_quantity !== undefined ? prod.stock_quantity.toString() : '100');
     setImageUrl(prod.image_url || '');
     setIsActive(prod.is_active === 1);
     setErrorMsg('');
@@ -135,6 +138,7 @@ export default function AdminProductsPage() {
       unit_id: unitId ? parseInt(unitId) : null,
       mrp_rate: parseFloat(mrpRate),
       discounted_rate: discountedRate ? parseFloat(discountedRate) : null,
+      stock_quantity: Math.max(0, parseInt(stockQuantity) || 0),
       image_url: imageUrl.trim() || null,
       is_active: isActive ? 1 : 0
     };
@@ -188,7 +192,7 @@ export default function AdminProductsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0b255a] font-serif">Product Management</h1>
-          <p className="text-xs text-slate-500">Manage fireworks products, MRP rates, discounted prices, and Vercel Blob images</p>
+          <p className="text-xs text-slate-500">Manage fireworks products, MRP rates, discounted prices, stock quantities, and Blob images</p>
         </div>
         <button
           onClick={openAddModal}
@@ -230,50 +234,72 @@ export default function AdminProductsPage() {
                   <th className="p-3 text-center">Unit</th>
                   <th className="p-3 text-right">MRP</th>
                   <th className="p-3 text-right">Net Rate</th>
+                  <th className="p-3 text-center">Available Stock</th>
                   <th className="p-3 text-center">Status</th>
                   <th className="p-3 text-center w-28">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {filteredProducts.map((p) => (
-                  <tr key={p.id} className={`hover:bg-slate-50 ${p.is_active === 0 ? 'opacity-50 bg-slate-50' : ''}`}>
-                    <td className="p-3 text-center">
-                      <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-white mx-auto">
-                        <Image src={p.image_url || '/logo.png'} alt={p.name} fill sizes="40px" className="object-contain p-0.5" />
-                      </div>
-                    </td>
-                    <td className="p-3 font-semibold text-slate-800">{p.name}</td>
-                    <td className="p-3 font-medium text-slate-600">{p.category_name || 'N/A'}</td>
-                    <td className="p-3 text-center font-mono text-xs">{p.unit_symbol || 'BOX'}</td>
-                    <td className="p-3 text-right font-mono text-slate-400 line-through">₹{Number(p.mrp_rate).toFixed(2)}</td>
-                    <td className="p-3 text-right font-extrabold font-mono text-red-600">
-                      ₹{p.discounted_rate ? Number(p.discounted_rate).toFixed(2) : Number(p.mrp_rate).toFixed(2)}
-                    </td>
-                    <td className="p-3 text-center">
-                      {p.is_active === 1 ? (
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">Active</span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-full">Inactive</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
-                          onClick={() => openEditModal(p)}
-                          className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(p.id)}
-                          className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredProducts.map((p) => {
+                  const stock = p.stock_quantity !== undefined ? p.stock_quantity : 100;
+                  return (
+                    <tr key={p.id} className={`hover:bg-slate-50 ${p.is_active === 0 ? 'opacity-50 bg-slate-50' : ''}`}>
+                      <td className="p-3 text-center">
+                        <div className="relative w-10 h-10 rounded-lg overflow-hidden border border-slate-200 bg-white mx-auto">
+                          <Image src={p.image_url || '/logo.png'} alt={p.name} fill sizes="40px" className="object-contain p-0.5" />
+                        </div>
+                      </td>
+                      <td className="p-3 font-semibold text-slate-800">{p.name}</td>
+                      <td className="p-3 font-medium text-slate-600">{p.category_name || 'N/A'}</td>
+                      <td className="p-3 text-center font-mono text-xs">{p.unit_symbol || 'BOX'}</td>
+                      <td className="p-3 text-right font-mono text-slate-400 line-through">₹{Number(p.mrp_rate).toFixed(2)}</td>
+                      <td className="p-3 text-right font-extrabold font-mono text-red-600">
+                        ₹{p.discounted_rate ? Number(p.discounted_rate).toFixed(2) : Number(p.mrp_rate).toFixed(2)}
+                      </td>
+                      
+                      {/* Stock Quantity Badge */}
+                      <td className="p-3 text-center">
+                        {stock === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-lg border border-red-200">
+                            <AlertTriangle className="w-3 h-3" /> Out of Stock (0)
+                          </span>
+                        ) : stock < 10 ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-lg border border-amber-200">
+                            Low Stock ({stock})
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200 font-mono">
+                            {stock} {p.unit_symbol || 'BOX'}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="p-3 text-center">
+                        {p.is_active === 1 ? (
+                          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">Active</span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-slate-200 text-slate-600 text-[10px] font-bold rounded-full">Inactive</span>
+                        )}
+                      </td>
+                      <td className="p-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            onClick={() => openEditModal(p)}
+                            className="p-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(p.id)}
+                            className="p-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -346,7 +372,7 @@ export default function AdminProductsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">MRP Rate (₹) *</label>
                   <input
@@ -360,13 +386,25 @@ export default function AdminProductsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Discounted Rate (₹)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Discount Rate (₹)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={discountedRate}
                     onChange={(e) => setDiscountedRate(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Stock Quantity *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={stockQuantity}
+                    onChange={(e) => setStockQuantity(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-amber-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none font-mono font-bold text-slate-900 bg-amber-50/50"
                   />
                 </div>
               </div>

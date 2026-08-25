@@ -59,7 +59,14 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       `SELECT * FROM ${table('orders')} WHERE order_id = ?`,
       [orderId]
     );
-    const existingOrder = existingRows[0] || {};
+
+    if (existingRows.length === 0) {
+      return NextResponse.json({ success: false, message: 'Order not found' }, { status: 404 });
+    }
+
+    const existingOrder = existingRows[0];
+    const targetStatus = status || existingOrder.status;
+    const isCurrentlyDeducted = Number(existingOrder.is_stock_deducted || 0) === 1;
 
     if (status) {
       await pool.query(
@@ -98,11 +105,48 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       updatedTotal = newTotal;
     }
 
+    // --- STOCK DEDUCTION / RESTORATION LOGIC ---
+    if (targetStatus === 'Success' && !isCurrentlyDeducted) {
+      // Deduct stock for all order items
+      const [orderItems]: any = await pool.query(
+        `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+        [orderId]
+      );
+      for (const item of orderItems) {
+        await pool.query(
+          `UPDATE ${table('products')} SET stock_quantity = GREATEST(0, stock_quantity - ?) WHERE id = ?`,
+          [item.quantity, item.product_id]
+        );
+      }
+      await pool.query(
+        `UPDATE ${table('orders')} SET is_stock_deducted = 1 WHERE order_id = ?`,
+        [orderId]
+      );
+    } else if (targetStatus !== 'Success' && isCurrentlyDeducted) {
+      // Restore stock for all order items
+      const [orderItems]: any = await pool.query(
+        `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+        [orderId]
+      );
+      for (const item of orderItems) {
+        await pool.query(
+          `UPDATE ${table('products')} SET stock_quantity = stock_quantity + ? WHERE id = ?`,
+          [item.quantity, item.product_id]
+        );
+      }
+      await pool.query(
+        `UPDATE ${table('orders')} SET is_stock_deducted = 0 WHERE order_id = ?`,
+        [orderId]
+      );
+    }
+
     // Trigger Telegram Notification for Order Action Update
     try {
       const targetName = customer_name || existingOrder.customer_name || 'Customer';
       const targetPhone = customer_phone || existingOrder.customer_phone || '';
       const updatedStatus = status || existingOrder.status || 'Updated';
+
+      const stockNote = targetStatus === 'Success' && !isCurrentlyDeducted ? '\n📦 <i>Product stock quantities automatically updated.</i>' : '';
 
       const telegramMsg = `
 🔄 <b>ORDER ACTION UPDATED!</b>
@@ -111,7 +155,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 👤 <b>Customer:</b> ${targetName}
 📞 <b>Phone:</b> ${targetPhone}
 📌 <b>New Status:</b> <b>${updatedStatus}</b>
-💵 <b>Total Amount:</b> ₹${Number(updatedTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+💵 <b>Total Amount:</b> ₹${Number(updatedTotal).toLocaleString('en-IN', { minimumFractionDigits: 2 })}${stockNote}
 
 <i>Sri Vinayaga Crackers Admin Panel</i>
       `.trim();
@@ -135,6 +179,26 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     const { id: orderId } = await params;
+
+    // Check if order stock was deducted, if so restore stock before deleting
+    const [existingRows]: any = await pool.query(
+      `SELECT is_stock_deducted FROM ${table('orders')} WHERE order_id = ?`,
+      [orderId]
+    );
+
+    if (existingRows.length > 0 && Number(existingRows[0].is_stock_deducted || 0) === 1) {
+      const [orderItems]: any = await pool.query(
+        `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+        [orderId]
+      );
+      for (const item of orderItems) {
+        await pool.query(
+          `UPDATE ${table('products')} SET stock_quantity = stock_quantity + ? WHERE id = ?`,
+          [item.quantity, item.product_id]
+        );
+      }
+    }
+
     await pool.query(`DELETE FROM ${table('order_items')} WHERE order_id = ?`, [orderId]);
     await pool.query(`DELETE FROM ${table('orders')} WHERE order_id = ?`, [orderId]);
 

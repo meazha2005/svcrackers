@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Search, Eye, Edit, Trash2, RefreshCw, Printer, CheckCircle, Clock, X } from 'lucide-react';
+import { ShoppingCart, Search, Eye, Edit, Trash2, RefreshCw, Printer, CheckCircle, Clock, X, Package } from 'lucide-react';
 import { Order } from '@/lib/types';
 
 export default function AdminOrdersPage() {
@@ -270,6 +270,13 @@ export default function AdminOrdersPage() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+
+              {newStatus === 'Success' && (
+                <div className="bg-amber-50 text-amber-900 border border-amber-300 rounded-xl p-3 text-xs font-semibold flex items-start gap-2">
+                  <Package className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>Setting status to <strong>Success</strong> will automatically calculate and reduce product stock quantities from available inventory.</span>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t">

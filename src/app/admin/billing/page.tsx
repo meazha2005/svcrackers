@@ -136,6 +136,7 @@ export default function AdminBillingPage() {
                 <thead className="bg-slate-900 text-white uppercase text-[11px] font-bold sticky top-0">
                   <tr>
                     <th className="p-3">Product Name</th>
+                    <th className="p-3 text-center">Stock</th>
                     <th className="p-3 text-right">Price</th>
                     <th className="p-3 text-center w-32">Qty</th>
                   </tr>
@@ -144,11 +145,21 @@ export default function AdminBillingPage() {
                   {filteredProducts.map((p) => {
                     const price = p.discounted_rate ? Number(p.discounted_rate) : Number(p.mrp_rate);
                     const qty = cart[p.id] || 0;
+                    const stock = p.stock_quantity !== undefined ? p.stock_quantity : 100;
+                    const isOutOfStock = stock === 0;
+
                     return (
-                      <tr key={p.id} className={`hover:bg-slate-50 ${qty > 0 ? 'bg-amber-50' : ''}`}>
+                      <tr key={p.id} className={`hover:bg-slate-50 ${qty > 0 ? 'bg-amber-50' : ''} ${isOutOfStock ? 'opacity-50 bg-slate-100' : ''}`}>
                         <td className="p-3 font-semibold text-slate-800">
                           {p.name}
                           <span className="text-[10px] text-slate-400 block font-normal">{p.category_name}</span>
+                        </td>
+                        <td className="p-3 text-center font-mono text-xs">
+                          {isOutOfStock ? (
+                            <span className="text-red-600 font-bold">Out (0)</span>
+                          ) : (
+                            <span className={stock < 10 ? 'text-amber-600 font-bold' : 'text-slate-600 font-semibold'}>{stock} {p.unit_symbol || 'BOX'}</span>
+                          )}
                         </td>
                         <td className="p-3 text-right font-extrabold font-mono text-red-600">₹{price.toFixed(2)}</td>
                         <td className="p-3 text-center">
@@ -156,15 +167,17 @@ export default function AdminBillingPage() {
                             <button
                               type="button"
                               onClick={() => handleQtyChange(p.id, Math.max(0, qty - 1))}
-                              className="w-6 h-6 rounded bg-slate-100 font-bold flex items-center justify-center hover:bg-red-500 hover:text-white"
+                              className="w-6 h-6 rounded bg-slate-100 font-bold flex items-center justify-center hover:bg-red-500 hover:text-white disabled:opacity-30"
+                              disabled={qty <= 0}
                             >
                               <Minus className="w-3 h-3" />
                             </button>
                             <span className="w-8 text-center font-bold font-mono">{qty}</span>
                             <button
                               type="button"
-                              onClick={() => handleQtyChange(p.id, qty + 1)}
-                              className="w-6 h-6 rounded bg-[#0b255a] text-white font-bold flex items-center justify-center hover:bg-amber-500 hover:text-slate-900"
+                              onClick={() => handleQtyChange(p.id, Math.min(stock, qty + 1))}
+                              className="w-6 h-6 rounded bg-[#0b255a] text-white font-bold flex items-center justify-center hover:bg-amber-500 hover:text-slate-900 disabled:opacity-30 disabled:hover:bg-[#0b255a]"
+                              disabled={qty >= stock || isOutOfStock}
                             >
                               <Plus className="w-3 h-3" />
                             </button>

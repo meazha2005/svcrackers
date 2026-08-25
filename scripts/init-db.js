@@ -83,6 +83,7 @@ async function initDatabase() {
       \`unit_id\` INT,
       \`mrp_rate\` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       \`discounted_rate\` DECIMAL(10,2) DEFAULT NULL,
+      \`stock_quantity\` INT NOT NULL DEFAULT 100,
       \`image_url\` VARCHAR(500),
       \`is_active\` TINYINT(1) DEFAULT 1,
       \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -102,6 +103,7 @@ async function initDatabase() {
       \`customer_address\` TEXT NOT NULL,
       \`total_amount\` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
       \`status\` VARCHAR(50) DEFAULT 'Bill Order Placed',
+      \`is_stock_deducted\` TINYINT(1) NOT NULL DEFAULT 0,
       \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);

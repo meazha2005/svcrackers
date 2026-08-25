@@ -29,9 +29,11 @@ export default function MobileProductCard({
   const hasDiscount = discounted < mrp;
   const discountPercent = hasDiscount ? Math.round(((mrp - discounted) / mrp) * 100) : 0;
   const lineTotal = quantity * discounted;
+  const stock = product.stock_quantity !== undefined ? product.stock_quantity : 100;
+  const isOutOfStock = stock === 0;
 
   return (
-    <div className={`bg-white border rounded-2xl p-4 shadow-sm transition-all space-y-3 ${quantity > 0 ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20' : 'border-slate-200'}`}>
+    <div className={`bg-white border rounded-2xl p-4 shadow-sm transition-all space-y-3 ${quantity > 0 ? 'border-amber-400 bg-amber-50/40 ring-2 ring-amber-400/20' : 'border-slate-200'} ${isOutOfStock ? 'opacity-60 bg-slate-50' : ''}`}>
       
       <div className="flex items-start gap-3">
         {/* Product Image */}
@@ -53,7 +55,18 @@ export default function MobileProductCard({
         {/* Product Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">{product.name}</h3>
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm leading-snug truncate">{product.name}</h3>
+              {isOutOfStock ? (
+                <span className="inline-block mt-0.5 px-2 py-0.5 bg-red-100 text-red-700 font-bold text-[10px] rounded-full">
+                  Out of Stock
+                </span>
+              ) : stock < 10 ? (
+                <span className="inline-block mt-0.5 px-2 py-0.5 bg-amber-100 text-amber-800 font-bold text-[10px] rounded-full">
+                  Only {stock} left
+                </span>
+              ) : null}
+            </div>
             <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded text-[10px] font-mono text-slate-600 shrink-0">
               {product.unit_symbol || product.unit_name || 'BOX'}
             </span>
@@ -73,34 +86,40 @@ export default function MobileProductCard({
 
       {/* Controls & Line Total */}
       <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1">
-          <button
-            type="button"
-            onClick={() => onQuantityChange(product.id, Math.max(0, quantity - 1))}
-            className="w-8 h-8 flex items-center justify-center rounded bg-white text-slate-700 shadow-sm hover:bg-red-500 hover:text-white font-bold transition-colors disabled:opacity-30"
-            disabled={quantity <= 0}
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <input
-            type="number"
-            min="0"
-            value={quantity === 0 ? '' : quantity}
-            placeholder="0"
-            onChange={(e) => {
-              const val = parseInt(e.target.value) || 0;
-              onQuantityChange(product.id, Math.max(0, val));
-            }}
-            className="w-12 text-center font-bold text-slate-900 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-          <button
-            type="button"
-            onClick={() => onQuantityChange(product.id, quantity + 1)}
-            className="w-8 h-8 flex items-center justify-center rounded bg-[#0b255a] text-white shadow-sm hover:bg-amber-500 hover:text-slate-900 font-bold transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
+        {isOutOfStock ? (
+          <span className="text-xs font-bold text-red-600">Currently Unavailable</span>
+        ) : (
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg p-1">
+            <button
+              type="button"
+              onClick={() => onQuantityChange(product.id, Math.max(0, quantity - 1))}
+              className="w-8 h-8 flex items-center justify-center rounded bg-white text-slate-700 shadow-sm hover:bg-red-500 hover:text-white font-bold transition-colors disabled:opacity-30"
+              disabled={quantity <= 0}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <input
+              type="number"
+              min="0"
+              max={stock}
+              value={quantity === 0 ? '' : quantity}
+              placeholder="0"
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                onQuantityChange(product.id, Math.min(stock, Math.max(0, val)));
+              }}
+              className="w-12 text-center font-bold text-slate-900 text-sm focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <button
+              type="button"
+              onClick={() => onQuantityChange(product.id, Math.min(stock, quantity + 1))}
+              className="w-8 h-8 flex items-center justify-center rounded bg-[#0b255a] text-white shadow-sm hover:bg-amber-500 hover:text-slate-900 font-bold transition-colors disabled:opacity-30 disabled:hover:bg-[#0b255a]"
+              disabled={quantity >= stock}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         <div className="text-right">
           <div className="text-[10px] text-slate-400 uppercase font-bold">Total</div>
