@@ -132,8 +132,8 @@ export default function InvoicePage() {
                 <h1 className="text-xl sm:text-2xl font-extrabold text-[#0b255a] font-serif uppercase tracking-wide">
                   SRI VINAYAGA CRACKERS
                 </h1>
-                <p className="text-xs text-slate-500 font-medium">Direct Factory Wholesale Fireworks • Sivakasi</p>
-                <p className="text-xs text-slate-500">Phone: +91 9876543210 | Email: info@srivinayagacrackers.com</p>
+                <p className="text-xs text-slate-500 font-medium">D/No :229. Subramaniyapuram (Near Ruby Sparklers), Sivakasi- 626128</p>
+                <p className="text-xs text-slate-500">Phone: +91 7780967465 / +91 9566383227 | Email: srivinayagacrackers26@gmail.com</p>
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export default function InvoicePage() {
           {/* Footer Terms */}
           <div className="text-center pt-4 border-t border-slate-200 text-xs text-slate-500 space-y-1">
             <p className="font-semibold text-slate-700">Thank you for your order with Sri Vinayaga Crackers!</p>
-            <p>For any order queries, please call us at +91 9876543210 with Order ID {order.order_id}.</p>
+            <p>For any order queries, please call us at +91 7780967465 / +91 9566383227 with Order ID {order.order_id}.</p>
           </div>
 
         </div>

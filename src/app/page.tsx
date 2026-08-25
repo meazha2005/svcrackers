@@ -136,7 +136,7 @@ export default function HomePage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/919566383227"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow transition-transform hover:scale-105"

@@ -45,7 +45,9 @@ export default function ContactPage() {
               </div>
               <h3 className="font-bold text-slate-900 text-sm">Store Address</h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                123 Fireworks Market Road, Sivakasi, Tamil Nadu - 626123
+                D/No :229. Subramaniyapuram (Near Ruby Sparklers)<br />
+                Sivakasi- Taluk, Virudhunagar- Dist.<br />
+                Tamilnadu- 626128.
               </p>
             </div>
 
@@ -55,7 +57,8 @@ export default function ContactPage() {
               </div>
               <h3 className="font-bold text-slate-900 text-sm">Call / WhatsApp</h3>
               <p className="text-xs text-slate-600 font-mono">
-                +91 9876543210<br />+91 9876543211
+                +91 7780967465<br />
+                +91 9566383227 (WhatsApp)
               </p>
             </div>
 
@@ -65,7 +68,7 @@ export default function ContactPage() {
               </div>
               <h3 className="font-bold text-slate-900 text-sm">Email Support</h3>
               <p className="text-xs text-slate-600 font-mono">
-                info@srivinayagacrackers.com
+                srivinayagacrackers26@gmail.com
               </p>
             </div>
           </div>

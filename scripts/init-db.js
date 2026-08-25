@@ -146,10 +146,10 @@ async function initDatabase() {
 
   // Seed default store settings if empty
   const defaultSettings = [
-    ['store_name', 'SRI VINAYAGA CRACKERS'],
-    ['store_address', '123 Fireworks Market Road, Sivakasi, Tamil Nadu - 626123'],
-    ['store_phone', '+91 9876543210'],
-    ['store_email', 'info@srivinayagacrackers.com'],
+    ['store_name', 'Sri Vinayaga Crackers'],
+    ['store_address', 'D/No :229. Subramaniyapuram (Near Ruby Sparklers), Sivakasi- Taluk, Virudhunagar- Dist. Tamilnadu- 626128.'],
+    ['store_phone', '+91 7780967465 / +91 9566383227'],
+    ['store_email', 'srivinayagacrackers26@gmail.com'],
     ['telegram_bot_token', ''],
     ['telegram_chat_id', '']
   ];

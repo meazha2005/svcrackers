@@ -55,15 +55,15 @@ export default function Footer() {
             <div className="space-y-2 text-xs text-slate-300">
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <span>123 Fireworks Market Road, Sivakasi, Tamil Nadu - 626123</span>
+                <span>D/No :229. Subramaniyapuram (Near Ruby Sparklers), Sivakasi- Taluk, Virudhunagar- Dist. Tamilnadu- 626128.</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>+91 9876543210 / +91 9876543211</span>
+                <span>+91 7780967465 / +91 9566383227</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>info@srivinayagacrackers.com</span>
+                <span>srivinayagacrackers26@gmail.com</span>
               </div>
             </div>
           </div>
