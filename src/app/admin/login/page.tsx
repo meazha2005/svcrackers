@@ -32,7 +32,7 @@ export default function AdminLoginPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push('/admin/dashboard');
+        window.location.href = '/admin/dashboard';
       } else {
         setError(data.message || 'Invalid username or password');
       }

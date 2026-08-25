@@ -1,6 +1,21 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+function parseJwtPayload(token: string) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) {
+      base64 += '=';
+    }
+    const jsonStr = atob(base64);
+    return JSON.parse(jsonStr);
+  } catch (e) {
+    return null;
+  }
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -12,19 +27,9 @@ export async function proxy(request: NextRequest) {
     let isAuthenticated = false;
 
     if (token) {
-      try {
-        // Simple 3-part JWT structure check
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
-          const exp = payload.exp;
-          // Check expiration timestamp
-          if (exp && exp * 1000 > Date.now()) {
-            isAuthenticated = true;
-          }
-        }
-      } catch (err) {
-        isAuthenticated = false;
+      const payload = parseJwtPayload(token);
+      if (payload && payload.exp && payload.exp * 1000 > Date.now()) {
+        isAuthenticated = true;
       }
     }
 
