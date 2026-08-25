@@ -72,9 +72,6 @@ export default function Footer() {
 
         <div className="mt-10 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© {new Date().getFullYear()} SRI VINAYAGA CRACKERS. All Rights Reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/admin/login" className="hover:text-slate-400">Admin Portal</Link>
-          </div>
         </div>
       </div>
     </footer>

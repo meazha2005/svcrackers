@@ -118,10 +118,6 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="text-center text-xs text-slate-400 pt-2 border-t border-slate-100">
-          Default Admin Login: <strong className="text-slate-700">admin / adminpassword</strong>
-        </div>
-
       </div>
     </div>
   );

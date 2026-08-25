@@ -92,12 +92,6 @@ export default function Navbar({ onSearchChange }: { onSearchChange?: (term: str
                   </Link>
                 );
               })}
-              <Link
-                href="/admin/dashboard"
-                className="ml-2 px-3 py-1.5 rounded-md text-xs font-medium border border-amber-400/50 text-amber-300 hover:bg-amber-400/20 transition-colors"
-              >
-                Admin Login
-              </Link>
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -143,13 +137,6 @@ export default function Navbar({ onSearchChange }: { onSearchChange?: (term: str
                 {link.name}
               </Link>
             ))}
-            <Link
-              href="/admin/dashboard"
-              onClick={() => setIsOpen(false)}
-              className="block px-4 py-2 rounded-lg text-sm font-medium bg-red-700/60 text-white hover:bg-red-700"
-            >
-              Admin Panel
-            </Link>
           </div>
         )}
       </nav>

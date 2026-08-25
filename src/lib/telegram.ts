@@ -29,7 +29,6 @@ export async function sendTelegramNotification(message: string, customToken?: st
 
     // STRICT VALIDATION: If token or chatId is missing/empty, do NOT perform HTTP call
     if (!botToken || !chatId || botToken.length < 10 || chatId.length < 3) {
-      console.log('Telegram bot_token or chat_id is missing or not configured. Skipping notification.');
       return false;
     }
 
