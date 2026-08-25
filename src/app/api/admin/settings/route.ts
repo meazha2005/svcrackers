@@ -38,7 +38,7 @@ export async function POST(request: Request) {
       }
 
       // Trigger Telegram notification for store settings change
-      setImmediate(() => {
+      try {
         const storeName = settings.store_name || 'Sri Vinayaga Crackers';
         const storeAddress = settings.store_address || '';
         const storePhone = settings.store_phone || '';
@@ -56,8 +56,10 @@ export async function POST(request: Request) {
 <i>Sri Vinayaga Crackers Admin Panel</i>
         `.trim();
 
-        sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram settings alert error:', err));
-      });
+        await sendTelegramNotification(telegramMsg, settings.telegram_bot_token, settings.telegram_chat_id);
+      } catch (tErr) {
+        console.error('Telegram settings alert error:', tErr);
+      }
 
       return NextResponse.json({ success: true, message: 'Settings updated successfully' });
     }
@@ -90,7 +92,7 @@ export async function POST(request: Request) {
       );
 
       // Trigger Security Telegram Alert for password change
-      setImmediate(() => {
+      try {
         const telegramMsg = `
 🔐 <b>SECURITY ALERT: ADMIN PASSWORD CHANGED</b>
 
@@ -100,8 +102,10 @@ export async function POST(request: Request) {
 <i>Sri Vinayaga Crackers Security System</i>
         `.trim();
 
-        sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram password change alert error:', err));
-      });
+        await sendTelegramNotification(telegramMsg);
+      } catch (tErr) {
+        console.error('Telegram password change alert error:', tErr);
+      }
 
       return NextResponse.json({ success: true, message: 'Password updated successfully' });
     }

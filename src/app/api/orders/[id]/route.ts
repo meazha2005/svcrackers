@@ -99,7 +99,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     // Trigger Telegram Notification for Order Action Update
-    setImmediate(() => {
+    try {
       const targetName = customer_name || existingOrder.customer_name || 'Customer';
       const targetPhone = customer_phone || existingOrder.customer_phone || '';
       const updatedStatus = status || existingOrder.status || 'Updated';
@@ -116,8 +116,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 <i>Sri Vinayaga Crackers Admin Panel</i>
       `.trim();
 
-      sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram order action alert error:', err));
-    });
+      await sendTelegramNotification(telegramMsg);
+    } catch (tErr) {
+      console.error('Telegram order action alert error:', tErr);
+    }
 
     return NextResponse.json({ success: true, message: 'Order updated successfully' });
   } catch (error: any) {
@@ -137,7 +139,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await pool.query(`DELETE FROM ${table('orders')} WHERE order_id = ?`, [orderId]);
 
     // Trigger Telegram Notification for Order Deletion
-    setImmediate(() => {
+    try {
       const telegramMsg = `
 🗑️ <b>ORDER DELETED</b>
 
@@ -147,8 +149,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 <i>Sri Vinayaga Crackers Admin Panel</i>
       `.trim();
 
-      sendTelegramNotification(telegramMsg).catch(err => console.error('Telegram order deletion alert error:', err));
-    });
+      await sendTelegramNotification(telegramMsg);
+    } catch (tErr) {
+      console.error('Telegram order deletion alert error:', tErr);
+    }
 
     return NextResponse.json({ success: true, message: 'Order deleted successfully' });
   } catch (error: any) {

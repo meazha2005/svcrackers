@@ -179,8 +179,8 @@ export async function POST(request: Request) {
 
     await connection.commit();
 
-    // Fire Telegram Notification completely out-of-band so response is instant!
-    setImmediate(() => {
+    // Send Telegram Notification
+    try {
       const itemListText = orderItemsToInsert
         .map((item, idx) => `  ${idx + 1}. ${item.product_name} × ${item.quantity} = ₹${item.total_price.toFixed(2)}`)
         .join('\n');
@@ -205,8 +205,10 @@ ${itemListText}
 <i>Sri Vinayaga Crackers Store</i>
       `.trim();
 
-      sendTelegramNotification(telegramMessage).catch(err => console.error('Telegram background alert error:', err));
-    });
+      await sendTelegramNotification(telegramMessage);
+    } catch (tErr) {
+      console.error('Telegram notification alert error:', tErr);
+    }
 
     return NextResponse.json({
       success: true,

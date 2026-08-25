@@ -1,9 +1,12 @@
 import pool, { table } from './db';
 
+let cachedToken: string | null = null;
+let cachedChatId: string | null = null;
+
 export async function sendTelegramNotification(message: string, customToken?: string, customChatId?: string) {
   try {
-    let botToken = customToken?.trim();
-    let chatId = customChatId?.trim();
+    let botToken = customToken?.trim() || process.env.TELEGRAM_BOT_TOKEN?.trim() || cachedToken;
+    let chatId = customChatId?.trim() || process.env.TELEGRAM_CHAT_ID?.trim() || cachedChatId;
 
     if (!botToken || !chatId) {
       const [rows]: any = await pool.query(
@@ -15,7 +18,14 @@ export async function sendTelegramNotification(message: string, customToken?: st
       });
       botToken = botToken || settings['telegram_bot_token'];
       chatId = chatId || settings['telegram_chat_id'];
+
+      if (botToken) cachedToken = botToken;
+      if (chatId) cachedChatId = chatId;
     }
+
+    // If custom tokens passed, update cache
+    if (customToken) cachedToken = customToken.trim();
+    if (customChatId) cachedChatId = customChatId.trim();
 
     // STRICT VALIDATION: If token or chatId is missing/empty, do NOT perform HTTP call
     if (!botToken || !chatId || botToken.length < 10 || chatId.length < 3) {
@@ -25,9 +35,9 @@ export async function sendTelegramNotification(message: string, customToken?: st
 
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
-    // 5-second AbortSignal timeout
+    // 6-second AbortSignal timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
 
     const res = await fetch(url, {
       method: 'POST',
@@ -43,10 +53,13 @@ export async function sendTelegramNotification(message: string, customToken?: st
     clearTimeout(timeoutId);
 
     const data = await res.json();
+    if (!data.ok) {
+      console.error('Telegram API returned error:', data);
+    }
     return data.ok;
   } catch (error: any) {
     if (error.name === 'AbortError') {
-      console.warn('Telegram API notification request timed out after 5 seconds.');
+      console.warn('Telegram API notification request timed out after 6 seconds.');
     } else {
       console.error('Telegram notification error:', error.message || error);
     }
