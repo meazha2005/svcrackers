@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Package, Plus, Edit, Trash2, Upload, Search, CheckCircle2, XCircle, Loader2, X, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, Upload, Search, CheckCircle2, XCircle, Loader2, X, AlertTriangle, Filter, RotateCcw } from 'lucide-react';
 import { Product, Category, Unit } from '@/lib/types';
 
 export default function AdminProductsPage() {
@@ -10,8 +10,13 @@ export default function AdminProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
-  
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedStockFilter, setSelectedStockFilter] = useState('');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('');
+
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -180,10 +185,42 @@ export default function AdminProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.category_name && p.category_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const resetFilters = () => {
+    setSearchTerm('');
+    setSelectedCategory('');
+    setSelectedStockFilter('');
+    setSelectedStatusFilter('');
+  };
+
+  // Comprehensive Filter Logic
+  const filteredProducts = products.filter((p) => {
+    // 1. Text Search
+    const matchesSearch =
+      !searchTerm ||
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.description && p.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (p.category_name && p.category_name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // 2. Category Filter
+    const matchesCategory =
+      !selectedCategory || (p.category_id && p.category_id.toString() === selectedCategory);
+
+    // 3. Stock Level Filter
+    const stock = p.stock_quantity !== undefined ? p.stock_quantity : 100;
+    let matchesStock = true;
+    if (selectedStockFilter === 'in_stock') matchesStock = stock >= 10;
+    else if (selectedStockFilter === 'low_stock') matchesStock = stock > 0 && stock < 10;
+    else if (selectedStockFilter === 'out_of_stock') matchesStock = stock === 0;
+
+    // 4. Status Filter
+    let matchesStatus = true;
+    if (selectedStatusFilter === 'active') matchesStatus = p.is_active === 1;
+    else if (selectedStatusFilter === 'inactive') matchesStatus = p.is_active === 0;
+
+    return matchesSearch && matchesCategory && matchesStock && matchesStatus;
+  });
+
+  const isFilterActive = searchTerm || selectedCategory || selectedStockFilter || selectedStatusFilter;
 
   return (
     <div className="space-y-6">
@@ -202,19 +239,82 @@ export default function AdminProductsPage() {
         </button>
       </div>
 
-      {/* Search & Filter */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex items-center gap-3">
-        <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Search product by name or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none"
-          />
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+      {/* Advanced Search & Filter Controls */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          {/* Search Input */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search by product name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+          </div>
+
+          {/* Category Filter */}
+          <div>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none bg-white font-medium text-slate-800"
+            >
+              <option value="">All Categories ({categories.length})</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Stock Level Filter */}
+          <div>
+            <select
+              value={selectedStockFilter}
+              onChange={(e) => setSelectedStockFilter(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none bg-white font-semibold text-slate-800"
+            >
+              <option value="">All Stock Levels</option>
+              <option value="in_stock">🟢 In Stock (10+)</option>
+              <option value="low_stock">🟡 Low Stock (1 - 9)</option>
+              <option value="out_of_stock">🔴 Out of Stock (0)</option>
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <select
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-400 outline-none bg-white font-medium text-slate-800"
+            >
+              <option value="">All Statuses</option>
+              <option value="active">Active Products</option>
+              <option value="inactive">Inactive Products</option>
+            </select>
+          </div>
+
         </div>
-        <span className="text-xs font-semibold text-slate-500">Total: {filteredProducts.length}</span>
+
+        {/* Filter Summary & Reset Bar */}
+        <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <Filter className="w-3.5 h-3.5 text-amber-600" />
+            <span>Showing <strong>{filteredProducts.length}</strong> of <strong>{products.length}</strong> products</span>
+          </div>
+
+          {isFilterActive && (
+            <button
+              onClick={resetFilters}
+              className="flex items-center gap-1 text-red-600 hover:text-red-800 font-bold transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Filters</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Products Table */}
@@ -222,7 +322,17 @@ export default function AdminProductsPage() {
         {loading ? (
           <div className="p-8 text-center text-slate-500 font-medium">Loading products...</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">No products found.</div>
+          <div className="p-8 text-center text-slate-400 space-y-2">
+            <p className="font-semibold text-slate-600">No matching products found.</p>
+            {isFilterActive && (
+              <button
+                onClick={resetFilters}
+                className="text-xs text-amber-600 underline font-bold"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs sm:text-sm">
