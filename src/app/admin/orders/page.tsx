@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingCart, Search, Eye, Edit, Trash2, RefreshCw, Printer, CheckCircle, Clock, X, Package, Send } from 'lucide-react';
+import { ShoppingCart, Search, Eye, Edit, Trash2, RefreshCw, Printer, CheckCircle, Clock, X, Package } from 'lucide-react';
 import { Order } from '@/lib/types';
 
 export default function AdminOrdersPage() {
@@ -196,31 +196,6 @@ export default function AdminOrdersPage() {
                     </td>
                     <td className="p-3 text-center">
                       <div className="flex items-center justify-center gap-1.5">
-                        {(() => {
-                          const rawP = ord.customer_phone ? ord.customer_phone.replace(/[^0-9]/g, '') : '';
-                          const waPhone = rawP.length === 10 ? `91${rawP}` : (rawP.length > 10 ? rawP : '');
-                          const waText = encodeURIComponent(
-                            `*SRI VINAYAGA CRACKERS - ESTIMATE INVOICE*\n\n` +
-                            `Hello ${ord.customer_name},\n` +
-                            `Thank you for your order!\n\n` +
-                            `🆔 *Order ID:* ${ord.order_id}\n` +
-                            `💵 *Total Amount:* ₹${Number(ord.total_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}\n` +
-                            `📌 *Status:* ${ord.status}\n\n` +
-                            `📄 *View Invoice:* ${typeof window !== 'undefined' ? window.location.origin : ''}/invoice/${ord.order_id}`
-                          );
-                          if (!waPhone) return null;
-                          return (
-                            <a
-                              href={`https://api.whatsapp.com/send?phone=${waPhone}&text=${waText}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              title={`Send invoice to ${ord.customer_name} via WhatsApp (${ord.customer_phone})`}
-                              className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-600 hover:text-white transition-colors"
-                            >
-                              <Send className="w-4 h-4" />
-                            </a>
-                          );
-                        })()}
                         <Link
                           href={`/invoice/${ord.order_id}`}
                           target="_blank"
@@ -232,7 +207,7 @@ export default function AdminOrdersPage() {
                         <button
                           onClick={() => openStatusModal(ord)}
                           title="Update Status"
-                          className="p-1.5 bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-100"
+                          className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100"
                         >
                           <CheckCircle className="w-4 h-4" />
                         </button>
