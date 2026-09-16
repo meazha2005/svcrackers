@@ -9,7 +9,7 @@ export async function GET() {
       FROM ${table('categories')} c 
       LEFT JOIN ${table('products')} p ON c.id = p.category_id AND p.is_active = 1 
       GROUP BY c.id 
-      ORDER BY c.name ASC
+      ORDER BY (c.name + 0) ASC, c.name ASC
     `);
     return NextResponse.json({ success: true, categories: rows });
   } catch (error: any) {

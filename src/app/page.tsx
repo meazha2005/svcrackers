@@ -224,7 +224,14 @@ export default function HomePage() {
         ) : (
           /* Products List Grouped By Category */
           <div className="space-y-8">
-            {Object.entries(groupedProducts).map(([categoryName, catProducts]) => (
+            {Object.entries(groupedProducts)
+              .sort(([catA], [catB]) => {
+                const numA = parseInt(catA) || 0;
+                const numB = parseInt(catB) || 0;
+                if (numA !== numB) return numA - numB;
+                return catA.localeCompare(catB, undefined, { numeric: true });
+              })
+              .map(([categoryName, catProducts]) => (
               <div key={categoryName} className="space-y-3">
                 
                 {/* Category Header */}
