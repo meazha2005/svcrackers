@@ -9,7 +9,7 @@ import CartSummaryBar from '@/components/CartSummaryBar';
 import CheckoutModal from '@/components/CheckoutModal';
 import ImageModal from '@/components/ImageModal';
 import { Product, Category } from '@/lib/types';
-import { Sparkles, Download, Phone, ShieldCheck, Flame, ShoppingCart, Tag } from 'lucide-react';
+import { Sparkles, Download, Phone, ShieldCheck, Flame, ShoppingCart, Tag, Loader2 } from 'lucide-react';
 
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,11 +23,25 @@ export default function HomePage() {
   
   // Modals state
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [imageModalData, setImageModalData] = useState<{ open: boolean; url: string; name: string }>({
     open: false,
     url: '',
     name: ''
   });
+
+  const handleDownloadPriceListPDF = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      const { generatePriceListPDF } = await import('@/lib/pdfGenerator');
+      await generatePriceListPDF(products, categories);
+    } catch (err) {
+      console.error('Error generating price list PDF:', err);
+      alert('Failed to generate PDF price list. Please try again.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   // Fetch products and categories on mount
   useEffect(() => {
@@ -143,6 +157,25 @@ export default function HomePage() {
               >
                 <Phone className="w-4 h-4" /> WhatsApp Quick Order
               </a>
+
+              <button
+                type="button"
+                onClick={handleDownloadPriceListPDF}
+                disabled={isGeneratingPdf || products.length === 0}
+                className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow transition-transform hover:scale-105 disabled:opacity-50 cursor-pointer"
+              >
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Download Price List (PDF)</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
