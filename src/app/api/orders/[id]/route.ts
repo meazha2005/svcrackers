@@ -90,6 +90,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     // If items are being edited
     if (Array.isArray(items)) {
+      // If stock was already deducted for this order, restore old items' stock first
+      if (isCurrentlyDeducted) {
+        const [oldItems]: any = await pool.query(
+          `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+          [orderId]
+        );
+        for (const item of oldItems) {
+          await pool.query(
+            `UPDATE ${table('products')} SET stock_quantity = stock_quantity + ? WHERE id = ?`,
+            [item.quantity, item.product_id]
+          );
+        }
+      }
+
       await pool.query(`DELETE FROM ${table('order_items')} WHERE order_id = ?`, [orderId]);
       let newTotal = 0;
       for (const item of items) {
@@ -103,41 +117,58 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
       await pool.query(`UPDATE ${table('orders')} SET total_amount = ? WHERE order_id = ?`, [newTotal, orderId]);
       updatedTotal = newTotal;
-    }
 
-    // --- STOCK DEDUCTION / RESTORATION LOGIC ---
-    if (targetStatus === 'Success' && !isCurrentlyDeducted) {
-      // Deduct stock for all order items
-      const [orderItems]: any = await pool.query(
-        `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
-        [orderId]
-      );
-      for (const item of orderItems) {
+      // If target status is Success, deduct stock for the new items
+      if (targetStatus === 'Success') {
+        for (const item of items) {
+          await pool.query(
+            `UPDATE ${table('products')} SET stock_quantity = GREATEST(0, stock_quantity - ?) WHERE id = ?`,
+            [parseInt(item.quantity), item.product_id]
+          );
+        }
         await pool.query(
-          `UPDATE ${table('products')} SET stock_quantity = GREATEST(0, stock_quantity - ?) WHERE id = ?`,
-          [item.quantity, item.product_id]
+          `UPDATE ${table('orders')} SET is_stock_deducted = 1 WHERE order_id = ?`,
+          [orderId]
+        );
+      } else {
+        await pool.query(
+          `UPDATE ${table('orders')} SET is_stock_deducted = 0 WHERE order_id = ?`,
+          [orderId]
         );
       }
-      await pool.query(
-        `UPDATE ${table('orders')} SET is_stock_deducted = 1 WHERE order_id = ?`,
-        [orderId]
-      );
-    } else if (targetStatus !== 'Success' && isCurrentlyDeducted) {
-      // Restore stock for all order items
-      const [orderItems]: any = await pool.query(
-        `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
-        [orderId]
-      );
-      for (const item of orderItems) {
+    } else {
+      // If items were NOT edited, handle standard status transition
+      if (targetStatus === 'Success' && !isCurrentlyDeducted) {
+        const [orderItems]: any = await pool.query(
+          `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+          [orderId]
+        );
+        for (const item of orderItems) {
+          await pool.query(
+            `UPDATE ${table('products')} SET stock_quantity = GREATEST(0, stock_quantity - ?) WHERE id = ?`,
+            [item.quantity, item.product_id]
+          );
+        }
         await pool.query(
-          `UPDATE ${table('products')} SET stock_quantity = stock_quantity + ? WHERE id = ?`,
-          [item.quantity, item.product_id]
+          `UPDATE ${table('orders')} SET is_stock_deducted = 1 WHERE order_id = ?`,
+          [orderId]
+        );
+      } else if (targetStatus !== 'Success' && isCurrentlyDeducted) {
+        const [orderItems]: any = await pool.query(
+          `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
+          [orderId]
+        );
+        for (const item of orderItems) {
+          await pool.query(
+            `UPDATE ${table('products')} SET stock_quantity = stock_quantity + ? WHERE id = ?`,
+            [item.quantity, item.product_id]
+          );
+        }
+        await pool.query(
+          `UPDATE ${table('orders')} SET is_stock_deducted = 0 WHERE order_id = ?`,
+          [orderId]
         );
       }
-      await pool.query(
-        `UPDATE ${table('orders')} SET is_stock_deducted = 0 WHERE order_id = ?`,
-        [orderId]
-      );
     }
 
     // Trigger Telegram Notification for Order Action Update
