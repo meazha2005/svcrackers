@@ -535,11 +535,11 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                {/* Status Notice if Success */}
-                {editStatus === 'Success' && (
+                {/* Status Notice if Stock Deducting Status */}
+                {['Payment Received', 'Out for Delivery', 'Success'].includes(editStatus) && (
                   <div className="bg-amber-50 text-amber-900 border border-amber-300 rounded-xl p-3 text-xs font-semibold flex items-start gap-2">
                     <Package className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                    <span>Status is set to <strong>Success</strong>. Saving will calculate and adjust inventory stock quantities automatically.</span>
+                    <span>Status is set to <strong>{editStatus}</strong>. Saving will calculate and adjust inventory stock quantities automatically.</span>
                   </div>
                 )}
 
@@ -732,10 +732,10 @@ export default function AdminOrdersPage() {
                 ))}
               </select>
 
-              {newStatus === 'Success' && (
+              {['Payment Received', 'Out for Delivery', 'Success'].includes(newStatus) && (
                 <div className="bg-amber-50 text-amber-900 border border-amber-300 rounded-xl p-3 text-xs font-semibold flex items-start gap-2">
                   <Package className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <span>Setting status to <strong>Success</strong> will automatically calculate and reduce product stock quantities from available inventory.</span>
+                  <span>Setting status to <strong>{newStatus}</strong> will automatically calculate and reduce product stock quantities from available inventory.</span>
                 </div>
               )}
             </div>

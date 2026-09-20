@@ -86,6 +86,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
+    const STOCK_DEDUCTING_STATUSES = ['Payment Received', 'Out for Delivery', 'Success'];
+    const willDeduct = STOCK_DEDUCTING_STATUSES.includes(targetStatus);
+
     let updatedTotal = existingOrder.total_amount;
 
     // If items are being edited
@@ -118,8 +121,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       await pool.query(`UPDATE ${table('orders')} SET total_amount = ? WHERE order_id = ?`, [newTotal, orderId]);
       updatedTotal = newTotal;
 
-      // If target status is Success, deduct stock for the new items
-      if (targetStatus === 'Success') {
+      // If target status requires stock deduction, deduct stock for the new items
+      if (willDeduct) {
         for (const item of items) {
           await pool.query(
             `UPDATE ${table('products')} SET stock_quantity = GREATEST(0, stock_quantity - ?) WHERE id = ?`,
@@ -137,8 +140,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         );
       }
     } else {
-      // If items were NOT edited, handle standard status transition
-      if (targetStatus === 'Success' && !isCurrentlyDeducted) {
+      // If items were NOT edited, handle status transition between deducting and non-deducting
+      if (willDeduct && !isCurrentlyDeducted) {
         const [orderItems]: any = await pool.query(
           `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
           [orderId]
@@ -153,7 +156,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           `UPDATE ${table('orders')} SET is_stock_deducted = 1 WHERE order_id = ?`,
           [orderId]
         );
-      } else if (targetStatus !== 'Success' && isCurrentlyDeducted) {
+      } else if (!willDeduct && isCurrentlyDeducted) {
         const [orderItems]: any = await pool.query(
           `SELECT product_id, quantity FROM ${table('order_items')} WHERE order_id = ?`,
           [orderId]
@@ -177,7 +180,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       const targetPhone = customer_phone || existingOrder.customer_phone || '';
       const updatedStatus = status || existingOrder.status || 'Updated';
 
-      const stockNote = targetStatus === 'Success' && !isCurrentlyDeducted ? '\n📦 <i>Product stock quantities automatically updated.</i>' : '';
+      const stockNote = willDeduct && !isCurrentlyDeducted 
+        ? '\n📦 <i>Product stock quantities automatically reduced.</i>' 
+        : (!willDeduct && isCurrentlyDeducted ? '\n📦 <i>Product stock quantities restored to inventory.</i>' : '');
 
       const telegramMsg = `
 🔄 <b>ORDER ACTION UPDATED!</b>
