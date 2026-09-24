@@ -53,9 +53,22 @@ export async function GET(request: Request) {
       [...queryParams, limit, offset]
     );
 
+    // Query confirmed total amount specifically for Payment Received, Out for Delivery, and Success
+    const [confirmedResult]: any = await pool.query(
+      `SELECT 
+        COALESCE(SUM(total_amount), 0) as confirmed_amount,
+        COUNT(*) as confirmed_count
+       FROM ${table('orders')}
+       WHERE status IN ('Payment Received', 'Out for Delivery', 'Success')`
+    );
+    const confirmedTotalAmount = parseFloat(confirmedResult[0]?.confirmed_amount || 0);
+    const confirmedOrdersCount = parseInt(confirmedResult[0]?.confirmed_count || 0);
+
     return NextResponse.json({
       success: true,
       orders,
+      confirmedTotalAmount,
+      confirmedOrdersCount,
       pagination: {
         page,
         limit,

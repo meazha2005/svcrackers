@@ -17,7 +17,8 @@ import {
   Plus, 
   Minus, 
   Loader2, 
-  AlertTriangle 
+  AlertTriangle,
+  CheckCircle2
 } from 'lucide-react';
 import { Order, OrderItem, Product } from '@/lib/types';
 
@@ -28,6 +29,10 @@ export default function AdminOrdersPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Confirmed Revenue Metrics (Payment Received, Out for Delivery, Success)
+  const [confirmedTotalAmount, setConfirmedTotalAmount] = useState<number>(0);
+  const [confirmedOrdersCount, setConfirmedOrdersCount] = useState<number>(0);
 
   // Status Modal State
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -62,6 +67,12 @@ export default function AdminOrdersPage() {
       if (data.success) {
         setOrders(data.orders || []);
         setTotalPages(data.pagination?.totalPages || 1);
+        if (data.confirmedTotalAmount !== undefined) {
+          setConfirmedTotalAmount(Number(data.confirmedTotalAmount));
+        }
+        if (data.confirmedOrdersCount !== undefined) {
+          setConfirmedOrdersCount(Number(data.confirmedOrdersCount));
+        }
       }
     } catch (err) {
       console.error(err);
@@ -316,6 +327,35 @@ export default function AdminOrdersPage() {
         >
           <ShoppingCart className="w-4 h-4" /> Create Manual Order
         </Link>
+      </div>
+
+      {/* Confirmed Orders Total Card (Payment Received, Out for Delivery, Success) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-emerald-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 bg-white/20 rounded-lg backdrop-blur-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-100" />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
+                Confirmed Orders Total
+              </span>
+            </div>
+            <div className="text-3xl sm:text-4xl font-extrabold font-mono text-white tracking-tight">
+              ₹{confirmedTotalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-emerald-100/90 font-medium">
+              Calculated exclusively for orders with status: <strong className="text-white">Payment Received</strong>, <strong className="text-white">Out for Delivery</strong>, or <strong className="text-white">Success</strong>
+            </p>
+          </div>
+
+          <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 sm:border-l border-white/20 pt-3 sm:pt-0 sm:pl-6 shrink-0">
+            <span className="text-xs text-emerald-100/80 uppercase font-semibold">Confirmed Orders</span>
+            <span className="text-2xl font-bold font-mono text-amber-300">
+              {confirmedOrdersCount}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Filter & Search Bar */}
