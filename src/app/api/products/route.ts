@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       query += ` WHERE p.is_active = 1 `;
     }
 
-    query += ` ORDER BY (c.name + 0) ASC, c.name ASC, (p.name + 0) ASC, p.name ASC`;
+    query += ` ORDER BY (c.name + 0) ASC, c.name ASC, p.id ASC`;
 
     const [rows] = await pool.query(query);
     return NextResponse.json({ success: true, products: rows });
